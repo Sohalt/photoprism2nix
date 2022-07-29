@@ -12,7 +12,7 @@ in {
   };
 
   testScript = ''
-    nodes.machine.wait_for_open_port(${toString photoprismPort})
-    nodes.machine.succeed("curl -f http://localhost:${toString photoprismPort}")
+    machine.wait_for_open_port(${toString photoprismPort})
+    assert "PhotoPrism" in machine.succeed("curl -f http://localhost:${toString photoprismPort}")
   '';
 }
