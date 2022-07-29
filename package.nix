@@ -1,0 +1,82 @@
+{ src, fetchzip, fetchurl, nodejs-14_x, runCommand, buildGoApplication, libtensorflow-bin, coreutils, npmlock2nix }:
+
+buildGoApplication {
+  name = "photoprism";
+  inherit src;
+
+  subPackages = [ "cmd/photoprism" ];
+
+  modules = ./gomod2nix.toml;
+
+  CGO_ENABLED = "1";
+  # https://github.com/mattn/go-sqlite3/issues/803
+  CGO_CFLAGS = "-Wno-return-local-addr";
+
+  buildInputs = [
+    #https://github.com/andir/infra/blob/master/nix/packages/photoprism/default.nix
+    (libtensorflow-bin.overrideAttrs (oA: rec {
+      # 21.05 does not have libtensorflow-bin 1.x anymore & photoprism isn't compatible with tensorflow 2.x yet
+      # https://github.com/photoprism/photoprism/issues/222
+      version = "1.15.0";
+      src = fetchurl {
+        url =
+          "https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-${version}.tar.gz";
+        sha256 =
+          "sha256-3sv9WnCeztNSP1XM+iOTN6h+GrPgAO/aNhfbeeEDTe0=";
+      };
+    }))
+  ];
+
+  prePatch = ''
+    substituteInPlace internal/commands/passwd.go --replace '/bin/stty' "${coreutils}/bin/stty"
+  '';
+
+  passthru = rec {
+
+    frontend = npmlock2nix.build {
+      name = "photoprism-frontend";
+      src = src + "/frontend";
+      nodejs = nodejs-14_x;
+
+      postUnpack = ''
+        chmod -R +rw .
+      '';
+
+      NODE_ENV = "production";
+
+      buildCommands = [ "npm run build" ];
+      installPhase = ''
+        cp -rv ../assets/static/build $out
+      '';
+    };
+
+    assets = let
+      nasnet = fetchzip {
+        url = "https://dl.photoprism.org/tensorflow/nasnet.zip";
+        sha256 =
+          "09cnr2wpc09xrv1crms3mfcl61rxf4nr5j51ppy4ng6bxg9rq5s1";
+      };
+
+      nsfw = fetchzip {
+        url = "https://dl.photoprism.org/tensorflow/nsfw.zip";
+        sha256 =
+          "0j0r39cgrr0zf2sc1hpr8jh19lr3jxdw9wz6sq3s7kkqay324ab8";
+      };
+
+      facenet = fetchzip {
+        url = "https://dl.photoprism.org/tensorflow/facenet.zip";
+        sha256 =
+          "0vyfy7hidlzibm59236ipaymj0mzclnriv9bi86dab1sa627cqpd";
+      };
+
+    in runCommand "photoprims-assets" { } ''
+      cp -rv ${src}/assets $out
+      chmod -R +rw $out
+      rm -rf $out/static/build
+      cp -rv ${frontend} $out/static/build
+      ln -s ${nsfw} $out/nsfw
+      ln -s ${nasnet} $out/nasnet
+      ln -s ${facenet} $out/facenet
+    '';
+  };
+}
