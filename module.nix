@@ -16,14 +16,14 @@ in {
         default = false;
       };
 
-      port = mkOption {
-        type = types.port;
-        default = 2342;
-      };
-
       host = mkOption {
         type = types.str;
         default = "127.0.0.1";
+      };
+
+      port = mkOption {
+        type = types.port;
+        default = 2342;
       };
 
       adminPasswordFile = mkOption {type = types.path;};
