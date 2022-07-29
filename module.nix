@@ -99,18 +99,18 @@ in {
           ++ optional cfg.mysql "mysql.service";
         wantedBy = ["multi-user.target"];
 
-        confinement = {
-          enable = true;
-          binSh = null;
-          packages = [
-            pkgs.libtensorflow-bin
-            pkgs.darktable
-            pkgs.ffmpeg
-            pkgs.exiftool
-            cfg.package
-            pkgs.cacert
-          ];
-        };
+        #confinement = {
+        #  enable = true;
+        #  binSh = null;
+        #  packages = [
+        #    pkgs.libtensorflow-bin
+        #    pkgs.darktable
+        #    pkgs.ffmpeg
+        #    pkgs.exiftool
+        #    cfg.package
+        #    pkgs.cacert
+        #  ];
+        #};
 
         path = [
           pkgs.libtensorflow-bin
