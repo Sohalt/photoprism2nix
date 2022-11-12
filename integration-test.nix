@@ -1,7 +1,9 @@
-{ photoprismModule }:
+{ pkgs, photoprismModule }:
 { ... }:
 let photoprismPort = 8080;
 in {
+  name = "photoprism-test";
+  hostPkgs = pkgs;
   nodes.machine = { config, pkgs, ... }: {
     imports = [ photoprismModule ];
     services.photoprism = {
@@ -13,6 +15,6 @@ in {
 
   testScript = ''
     machine.wait_for_open_port(${toString photoprismPort})
-    assert "PhotoPrism" in machine.succeed("curl -f http://localhost:${toString photoprismPort}")
+    assert "PhotoPrism" in machine.succeed("curl -L -f http://localhost:${toString photoprismPort}")
   '';
 }

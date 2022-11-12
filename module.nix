@@ -62,7 +62,6 @@ in {
         HttpHost = cfg.host;
         HttpPort = cfg.port;
         HttpMode = "release";
-        AssetsPath = cfg.package.assets;
         Public = mkDefault false;
         Readonly = mkDefault false;
         SiteUrl = mkDefault "http://${cfg.host}:${toString cfg.port}";
@@ -99,30 +98,10 @@ in {
           ++ optional cfg.mysql "mysql.service";
         wantedBy = ["multi-user.target"];
 
-        #confinement = {
-        #  enable = true;
-        #  binSh = null;
-        #  packages = [
-        #    pkgs.libtensorflow-bin
-        #    pkgs.darktable
-        #    pkgs.ffmpeg
-        #    pkgs.exiftool
-        #    cfg.package
-        #    pkgs.cacert
-        #  ];
-        #};
-
-        path = [
-          pkgs.libtensorflow-bin
-          pkgs.darktable
-          pkgs.ffmpeg
-          pkgs.exiftool
-        ];
-
         script = ''
           PHOTOPRISM_ADMIN_PASSWORD=$(cat $CREDENTIALS_DIRECTORY/admin_password) ${cfg.package}/bin/photoprism --defaults-yaml ${
             settingsFormat.generate "defaults.yaml" cfg.settings
-          } --assets-path ${cfg.package.assets} start
+          } start
         '';
 
         serviceConfig = {
